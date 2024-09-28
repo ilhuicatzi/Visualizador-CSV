@@ -1,0 +1,11 @@
+ID,Producto,Categoría,Precio,Cantidad en Stock,Ventas Mensuales,Proveedor
+1,Camiseta Blanca,Ropa,19.99,100,50,Proveedor A
+2,Pantalón Vaquero,Ropa,39.99,75,30,Proveedor A
+3,Zapatos Deportivos,Calzado,59.99,50,20,Proveedor B
+4,Reloj de Pulsera,Accesorios,99.99,25,10,Proveedor C
+5,Mochila Negra,Bolsos,29.99,80,40,Proveedor A
+6,Gafas de Sol,Accesorios,14.99,60,25,Proveedor D
+7,Camisa de Vestir,Ropa,24.99,90,35,Proveedor A
+8,Zapatillas de Lona,Calzado,19.99,70,30,Proveedor B
+9,Bolso de Mano,Bolsos,49.99,40,15,Proveedor C
+10,Sombrero de Paja,Accesorios,9.99,55,20,Proveedor D
