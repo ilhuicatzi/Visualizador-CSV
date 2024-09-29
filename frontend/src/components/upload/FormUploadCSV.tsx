@@ -27,8 +27,26 @@ function FormUploadCSV() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data);
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    try {
+        const formData = new FormData();
+        formData.append("dataFile", data.dataFile as File);
+    
+        const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+        });
+    
+        if (response.ok) {
+            const { data } = await response.json();
+            console.log(data);
+        } else {
+            console.error("Error al subir el archivo");
+        }
+        
+    } catch (error) {
+        console.log(error)
+    }
   }
 
   return (
