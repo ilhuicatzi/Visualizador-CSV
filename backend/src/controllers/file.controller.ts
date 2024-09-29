@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import csvToJson from "convert-csv-to-json";
-import { setCsvData } from "db/dataStore";
+import { setCsvData } from "../db/dataStore";
 
 
 export const uploadFile = async (req: Request, res: Response) => {

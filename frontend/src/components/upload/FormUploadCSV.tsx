@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
+import { Toaster, toast } from 'sonner'
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,6 +12,28 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import ViewTableData from "./ViewTableData";
+import { uploadFile } from "@/services/uploadFile";
+import { useState } from "react";
+import { Data } from "@/types/types";
+
+const APP_STATUS = {
+  IDLE: "idle",
+  READY_TO_UPLOAD: "ready_to_upload",
+  UPLOADING: "uploading",
+  ERROR: "error",
+  SUCCESS: "success",
+  NEXT: "next",
+} as const;
+
+const BUTTON_TEXT = {
+  [APP_STATUS.READY_TO_UPLOAD]: "Subir archivo",
+  [APP_STATUS.UPLOADING]: "Subiendo archivo...",
+  [APP_STATUS.SUCCESS]: "Archivo subido",
+} 
+
+
+type AppStatus = typeof APP_STATUS[keyof typeof APP_STATUS];
 
 const FormSchema = z.object({
   dataFile: z.instanceof(File).refine((file) => file.type === "text/csv", {
@@ -20,6 +42,10 @@ const FormSchema = z.object({
 });
 
 function FormUploadCSV() {
+  const [status, setStatus] = useState<AppStatus>(APP_STATUS.IDLE);
+  const [jsonData, setJsonData] = useState<Data>([]);
+  const showButton = status === APP_STATUS.READY_TO_UPLOAD || status === APP_STATUS.UPLOADING;
+  const showForm = status !== APP_STATUS.NEXT;
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -28,30 +54,34 @@ function FormUploadCSV() {
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    try {
-        const formData = new FormData();
-        formData.append("dataFile", data.dataFile as File);
+    if (status !== APP_STATUS.READY_TO_UPLOAD || !data.dataFile) {
+      return;
+    }
+    const [error, responseData] = await uploadFile(data.dataFile);
+
+    setStatus(APP_STATUS.UPLOADING);
+    if (error) {
+      setStatus(APP_STATUS.ERROR);
+      console.log({ error });
+      return toast.error(error.message);
+    }
     
-        const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-        });
-    
-        if (response.ok) {
-            const { data } = await response.json();
-            console.log(data);
-        } else {
-            console.error("Error al subir el archivo");
-        }
-        
-    } catch (error) {
-        console.log(error)
+    if (responseData) {
+      setJsonData(responseData);
+      console.log({ responseData });
+      setStatus(APP_STATUS.SUCCESS);
+      toast.success("Archivo subido");
     }
   }
 
+  const viewData = () => {
+    setStatus(APP_STATUS.NEXT);
+  }
   return (
     <article className="md:px-20 w-full flex justify-center items-center mt-10">
-      <Form {...form}>
+      <Toaster />
+      {showForm && (
+        <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full max-w-sm space-y-6"
@@ -68,7 +98,11 @@ function FormUploadCSV() {
                     accept=".csv"
                     className="px-5 bg-muted"
                     type="file"
-                    onChange={(e) => field.onChange(e.target.files?.[0])}
+                    disabled ={status == APP_STATUS.UPLOADING}
+                    onChange={(e) => {
+                      field.onChange(e.target.files?.[0]);
+                      setStatus(APP_STATUS.READY_TO_UPLOAD);
+                    }}
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -79,16 +113,29 @@ function FormUploadCSV() {
             )}
           />
           <div className="flex justify-end gap-3">
-            <Button type="submit">Subir archivo</Button>
+            
+            {
+              showButton && (
+              <Button variant="default" type="submit" disabled={status === APP_STATUS.UPLOADING}>
+                {BUTTON_TEXT[status]}
+              </Button>
+              )
+            }
 
-            <div className="hidden">
-              <Button variant="outline" type="button">
+            {
+              status === APP_STATUS.SUCCESS && (
+              <Button variant="outline" type="button" onClick={viewData}>
                 Visualizar
               </Button>
-            </div>
+              )
+            }
           </div>
         </form>
       </Form>
+      )}
+
+      {status === APP_STATUS.NEXT && <ViewTableData data={jsonData} />}
+
     </article>
   );
 }

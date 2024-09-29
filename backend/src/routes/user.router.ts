@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { csvData } from "db/dataStore";
+import { csvData } from "../db/dataStore";
 
 const router = Router();
 
